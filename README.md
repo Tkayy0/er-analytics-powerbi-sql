@@ -6,6 +6,10 @@ An interactive Power BI dashboard analysing 9,216 emergency room patient visits.
 
 ![Emergency room dashboard in Power BI](images/dashboard.png)
 
+## Demo
+<img width="800" height="450" alt="Demo" src="https://github.com/user-attachments/assets/89ff4ba1-6eee-447b-828c-7eb02e15cba2" />
+
+
 ## Headline figures
 
 | Metric | Value |
@@ -65,7 +69,7 @@ The KPI queries return the same headline figures as the dashboard. The departmen
 
 ## Data
 
-<!-- ADD: where the dataset came from and its licence, for example "Source: <name and link>. Used under <licence>." -->
+[Data](https://drive.google.com/file/d/1h7SHRhKeP9jP1axeYRtKg-TE3UldhiYx/view)
 
 The raw CSV is not included in this repository. It contains patient ID and name columns. To run the queries, get the file from its source and save it as `data/Hospital_ER.csv`.
 
