@@ -4,7 +4,7 @@ An interactive Power BI dashboard analysing 9,216 emergency room patient visits.
 
 > **Sample data.** This project uses a sample practice dataset, not real hospital data. Nothing here should be read as a finding about real patients.
 
-![Emergency room dashboard in Power BI]
+
 <img width="1280" height="720" alt="dashboard" src="https://github.com/user-attachments/assets/bb780a39-84ee-4e87-bb98-35be276d320c" />
 
 
