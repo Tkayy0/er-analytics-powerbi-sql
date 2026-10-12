@@ -1,0 +1,248 @@
+-- measures.dax
+-- The DAX behind the Emergency Room dashboard in Power BI.
+--
+-- Tables in the model:
+--   'Patients Dataset'  the cleaned visit data (loaded in power_query/patients_dataset.m)
+--   'Calculation'       holds the measures below
+--   'Date'              a calendar table
+--   'Parameter'         a field parameter that switches the heatmap between two measures
+
+-- ============================================================
+-- Core measures
+-- ============================================================
+
+Total Patients =
+COUNTROWS ( 'Patients Dataset' )
+
+Average Wait Time =
+AVERAGE ( 'Patients Dataset'[patient_waittime] )
+
+-- Averages rated visits only. In DAX a blank compares equal to 0, so this
+-- also leaves out scores of 0, not just empty ones.
+Average Satisfaction Score =
+CALCULATE (
+    AVERAGE ( 'Patients Dataset'[patient_sat_score] ),
+    'Patients Dataset'[patient_sat_score] <> BLANK ()
+)
+
+-- Share of visits with no usable rating (blank, and 0 for the same reason as above)
+% No Rating =
+VAR _NoRatings =
+    CALCULATE (
+        [Total Patients],
+        'Patients Dataset'[patient_sat_score] = BLANK ()
+    )
+RETURN
+    DIVIDE ( _NoRatings, [Total Patients] )
+
+-- ============================================================
+-- Appointment type
+-- ============================================================
+
+% Administrative Schedule =
+DIVIDE (
+    COUNTROWS (
+        FILTER ( 'Patients Dataset', 'Patients Dataset'[patient_admin_flag] = "TRUE" )
+    ),
+    [Total Patients]
+)
+
+% None Administrative Schedule =
+DIVIDE (
+    COUNTROWS (
+        FILTER ( 'Patients Dataset', 'Patients Dataset'[patient_admin_flag] = "FALSE" )
+    ),
+    [Total Patients]
+)
+
+-- ============================================================
+-- Referred vs walk-in
+-- ============================================================
+
+% Un Referred Patients =
+VAR _FilterPatients =
+    CALCULATE (
+        [Total Patients],
+        'Patients Dataset'[department_referral] = "none"
+    )
+RETURN
+    DIVIDE ( _FilterPatients, [Total Patients] )
+
+% Referred Patients =
+VAR _FilterPatients =
+    CALCULATE (
+        [Total Patients],
+        'Patients Dataset'[department_referral] <> "none"
+    )
+RETURN
+    DIVIDE ( _FilterPatients, [Total Patients] )
+
+-- ============================================================
+-- Gender
+-- ============================================================
+
+% Male Visit =
+DIVIDE (
+    CALCULATE ( [Total Patients], 'Patients Dataset'[patient_gender] = "M" ),
+    [Total Patients]
+)
+
+% Female Visit =
+DIVIDE (
+    CALCULATE ( [Total Patients], 'Patients Dataset'[patient_gender] = "F" ),
+    [Total Patients]
+)
+
+% Unknown =
+DIVIDE (
+    CALCULATE ( [Total Patients], 'Patients Dataset'[patient_gender] = "NC" ),
+    [Total Patients]
+)
+
+-- ============================================================
+-- Highlighting the highest and lowest points on the trend charts
+-- (the "CF" measures return 0 for the lowest point and 1 for the highest, which
+--  drives the red and green marker colours; the "Values" measures show the number)
+-- ============================================================
+
+CF Max Point (Month) =
+VAR _PatientTable =
+    CALCULATETABLE (
+        ADDCOLUMNS (
+            SUMMARIZE ( 'Date', 'Date'[Month] ),
+            "@Total_Patients", [Total Patients]
+        ),
+        ALLSELECTED ()
+    )
+VAR _MinValue = MINX ( _PatientTable, [@Total_Patients] )
+VAR _Maxvalue = MAXX ( _PatientTable, [@Total_Patients] )
+VAR _TotalPatients = [Total Patients]
+RETURN
+    SWITCH (
+        TRUE (),
+        _TotalPatients = _MinValue, 0,
+        _TotalPatients = _Maxvalue, 1
+    )
+
+Values Max Point (Month) =
+VAR _PatientTable =
+    CALCULATETABLE (
+        ADDCOLUMNS (
+            SUMMARIZE ( 'Date', 'Date'[Month] ),
+            "@Total_Patients", [Total Patients]
+        ),
+        ALLSELECTED ()
+    )
+VAR _MinValue = MINX ( _PatientTable, [@Total_Patients] )
+VAR _Maxvalue = MAXX ( _PatientTable, [@Total_Patients] )
+VAR _TotalPatients = [Total Patients]
+RETURN
+    SWITCH (
+        TRUE (),
+        _TotalPatients = _MinValue, [Total Patients],
+        _TotalPatients = _Maxvalue, [Total Patients]
+    )
+
+CF Max Point (Year) =
+VAR _PatientTable =
+    CALCULATETABLE (
+        ADDCOLUMNS (
+            SUMMARIZE ( 'Date', 'Date'[Year] ),
+            "@Total_Patients", [Total Patients]
+        ),
+        ALLSELECTED ()
+    )
+VAR _MinValue = MINX ( _PatientTable, [@Total_Patients] )
+VAR _Maxvalue = MAXX ( _PatientTable, [@Total_Patients] )
+VAR _TotalPatients = [Total Patients]
+RETURN
+    SWITCH (
+        TRUE (),
+        _TotalPatients = _MinValue, 0,
+        _TotalPatients = _Maxvalue, 1
+    )
+
+Values Max Point (year) =
+VAR _PatientTable =
+    CALCULATETABLE (
+        ADDCOLUMNS (
+            SUMMARIZE ( 'Date', 'Date'[Year] ),
+            "@Total_Patients", [Total Patients]
+        ),
+        ALLSELECTED ()
+    )
+VAR _MinValue = MINX ( _PatientTable, [@Total_Patients] )
+VAR _Maxvalue = MAXX ( _PatientTable, [@Total_Patients] )
+VAR _TotalPatients = [Total Patients]
+RETURN
+    SWITCH (
+        TRUE (),
+        _TotalPatients = _MinValue, [Total Patients],
+        _TotalPatients = _Maxvalue, [Total Patients]
+    )
+
+-- ============================================================
+-- Heatmap caption: changes with the measure selected in the slicer
+-- ============================================================
+
+HitMap Caption =
+VAR _SelectedMeasure = SELECTEDVALUE ( Parameter[Parameter Order] )
+RETURN
+    IF (
+        _SelectedMeasure = 0,
+        "The darkest GREEN on the Scale denotes LOW wait TIME on the Age-Group",
+        "Patients are most Satisfied when the SCALE shows the darkest GREEN on the Age-Group"
+    )
+
+-- ============================================================
+-- Calculated columns on 'Patients Dataset'
+-- ============================================================
+
+Age Buckets =
+SWITCH (
+    TRUE (),
+    'Patients Dataset'[patient_age] <= 10, "0-10",
+    'Patients Dataset'[patient_age] <= 20, "11-20",
+    'Patients Dataset'[patient_age] <= 30, "21-30",
+    'Patients Dataset'[patient_age] <= 40, "31-40",
+    'Patients Dataset'[patient_age] <= 50, "41-50",
+    'Patients Dataset'[patient_age] <= 60, "51-60",
+    'Patients Dataset'[patient_age] <= 70, "61-70",
+    "70+"
+)
+
+Age Group =
+VAR _PatientAge = 'Patients Dataset'[patient_age]
+RETURN
+    IF (
+        _PatientAge <= 2, "Infancy",
+        IF (
+            _PatientAge <= 6, "Early Childhood",
+            IF (
+                _PatientAge <= 12, "Middle Childhood",
+                IF ( _PatientAge <= 18, "Teenager", "Adult" )
+            )
+        )
+    )
+
+-- ============================================================
+-- Calculated tables
+-- ============================================================
+
+-- Calendar table, with a weekday/weekend flag (WEEKDAY: Sunday = 1, Saturday = 7)
+Date =
+ADDCOLUMNS (
+    CALENDARAUTO (),
+    "Year", YEAR ( [Date] ),
+    "Month", FORMAT ( [Date], "mmm" ),
+    "WeekType", IF ( WEEKDAY ( [Date] ) = 1, "Weekend", IF ( WEEKDAY ( [Date] ) = 7, "Weekend", "Weekday" ) ),
+    "Weekday", FORMAT ( [Date], "ddd" ),
+    "MonthNum", MONTH ( [Date] )
+)
+
+-- Field parameter: lets the heatmap switch between average satisfaction and average wait time
+Parameter =
+{
+    ( "Avg. Satisfaction", NAMEOF ( 'Calculation'[Average Satisfaction Score] ), 0 ),
+    ( "Avg. Wait Time", NAMEOF ( 'Calculation'[Average Wait Time] ), 1 )
+}
