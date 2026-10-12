@@ -4,7 +4,9 @@ An interactive Power BI dashboard analysing 9,216 emergency room patient visits.
 
 > **Sample data.** This project uses a sample practice dataset, not real hospital data. Nothing here should be read as a finding about real patients.
 
-![Emergency room dashboard in Power BI](images/dashboard.png)
+![Emergency room dashboard in Power BI]
+<img width="1280" height="720" alt="dashboard" src="https://github.com/user-attachments/assets/bb780a39-84ee-4e87-bb98-35be276d320c" />
+
 
 ## Demo
 <img width="800" height="450" alt="Demo" src="https://github.com/user-attachments/assets/89ff4ba1-6eee-447b-828c-7eb02e15cba2" />
@@ -35,7 +37,7 @@ The visits run from 1 April 2019 to 30 October 2020.
 - Visits by year and by month, with the highest and lowest points marked, and weekday vs weekend
 - A heatmap of average wait time or average satisfaction by patient race and age band, switched with a slicer
 
-![Heatmap of average wait time by age group and patient race](images/heatmap.png)
+<img width="902" height="426" alt="heatmap" src="https://github.com/user-attachments/assets/f552e257-3038-404f-bed6-2308301c6091" />
 
 ## How it is built
 
