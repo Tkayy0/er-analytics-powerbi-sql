@@ -101,5 +101,5 @@ Working through the full path from raw data to a finished dashboard: ingesting a
 
 ## Related
 
-- GitHub: https://github.com/keeganchinyenze
+- GitHub: https://github.com/Tkayy0
 - LinkedIn: https://www.linkedin.com/in/keeganchinyenze
